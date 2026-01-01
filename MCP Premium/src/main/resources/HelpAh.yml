@@ -1,0 +1,44 @@
+# ========================================
+# АУКЦИОН - ПОЛНАЯ НАСТРОЙКА HELP
+# ========================================
+
+# ОСНОВНЫЕ СООБЩЕНИЯ
+messages:
+  help:
+    title: '&c&l&n═══ АУКЦИОН КОМАНДЫ ═══'
+    menu: '&f/ah &7&l- открыть главное меню'
+    sell: '&f/ah sell <цена> &7&l- продать предмет в руке'
+    myitems: '&f/ah my &7&l- мои товары на аукционе'
+    help: '&f/ahelp &7&l- подробная справка'
+    example: '&e&lПример: &f/ah sell 100'
+    footer: '&7&m═══════════════════════════════'
+
+  # Ошибки
+  no_permission: '&c&l❌ Нет прав для справки!'
+  only_players: '&c&l❌ Только для игроков!'
+
+  # Другие команды
+  unknown: '&c&l❌ Неверная команда!'
+  unknown_args: '&f/ah &7- меню &8| &f/ah sell <цена> &7- продажа'
+  help_hint: '&7&o§lПодсказка: &f/ahelp'
+
+# НАСТРОЙКИ ОТОБРАЖЕНИЯ
+settings:
+  multiline_help: true
+  prefix: '&6[АУКЦИОН] &f'
+  sounds:
+    help: 'ENTITY_EXPERIENCE_ORB_PICKUP'
+    error: 'ENTITY_VILLAGER_NO'
+
+# АЛИАСЫ КОМАНД (для будущего)
+commands:
+  enabled:
+    ahelp: true
+    ahhelp: true
+    auctionhelp: true
+  disabled:
+    markethelp: false
+
+# ПЕРМИШНЫ (описание)
+permissions:
+  vaulteconomy.auction.help: 'Доступ к справке аукциона'

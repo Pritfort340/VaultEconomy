@@ -1,0 +1,350 @@
+name: VaultEconomy
+version: 1.0.2
+main: me.kodysimpson.vaulteconomy.VaultEconomy
+api-version: 1.13
+
+depend:
+  - Vault
+
+commands:
+  clearchat:
+    description: Очистка чата
+    permission: vaulteconomy.clearchat
+
+  feed:
+    description: Восстановить голод игрока
+    permission: vaulteconomy.feed
+
+  ignore:
+    description: Игнорировать/не игнорировать игрока
+    usage: "/ignore <игрок> <on|off>"
+    permission: vaulteconomy.ignore
+
+  sp:
+    description: Спавн мобов
+    usage: "/sp <mob> [x] [y] [z] [NBT]"
+    permission: vaulteconomy.spawnmob
+
+  bits:
+    description: Основная команда экономики
+    aliases: [bal, balance, money]
+    permission: vaulteconomy.balance
+    permission-message: "У вас нет прав для использования этой команды."
+
+  gamemode:
+    description: Смена игрового режима
+    aliases: [gm, gmc, gms, gma, gmsp]
+    permission: vaulteconomy.gamemode
+    permission-message: "У вас нет прав для смены игрового режима."
+
+  fly:
+    description: Включить или выключить полет
+    permission: vaulteconomy.fly
+
+  heal:
+    description: Лечит игрока
+    permission: vaulteconomy.heal
+    permission-message: "У вас нет прав для использования этой команды."
+
+  god:
+    description: Включить или выключить режим Бога
+    aliases: [godmode]
+    permission: vaulteconomy.god
+    permission-message: "У вас нет прав для включения режима Бога."
+
+  tp:
+    description: Телепортация к игроку
+    permission: vaulteconomy.tp
+
+  tpa:
+    description: Запрос на телепортацию к игроку
+    permission: vaulteconomy.tpa
+
+  tpahere:
+    description: Запрос на телепортацию игрока к вам
+    permission: vaulteconomy.tpahere
+
+  tpaaccept:
+    description: Принять запрос на телепортацию
+    permission: vaulteconomy.tpaaccept
+
+  tpadeny:
+    description: Отклонить запрос на телепортацию
+    permission: vaulteconomy.tpadeny
+
+  point:
+    description: Управление кастомными валютами (/point create, give, pay и т.д.)
+    permission: vaulteconomy.point.use
+    permission-message: "У вас нет прав для использования этой команды."
+
+  pex:
+    description: Управление префиксом в чате
+    permission: vaulteconomy.pex
+    permission-message: "У вас нет прав для этой команды."
+
+  spawn:
+    description: Телепорт на спавн или установка спавна
+    permission: vaulteconomy.spawn
+    permission-message: "У вас нет прав для использования этой команды."
+
+  home:
+    description: Телепорт домой
+    permission: vaulteconomy.home
+
+  sethome:
+    description: Установить дом
+    permission: vaulteconomy.sethome
+
+  delhome:
+    description: Удалить дом
+    permission: vaulteconomy.delhome
+
+  warp:
+    description: Телепорт на варп
+    permission: vaulteconomy.warp
+
+  setwarp:
+    description: Установить варп
+    permission: vaulteconomy.setwarp
+
+  delwarp:
+    description: Удалить варп
+    permission: vaulteconomy.delwarp
+
+  baltop:
+    description: Топ игроков по балансу и по валютам /point
+    permission: vaulteconomy.baltop
+    aliases: [top]
+
+  warplist:
+    description: Список всех варпов
+    permission: vaulteconomy.warplist
+
+  homelist:
+    description: Список домов игрока
+    permission: vaulteconomy.homelist
+
+  filter:
+    description: "Фильтр чата"
+    usage: "/<command> [add|remove|list|toggle]"
+    permission: "vaulteconomy.filter.admin"
+
+  # ===== НОВЫЕ УТИЛИТЫ =====
+  craft:
+    description: Открыть виртуальный верстак
+    permission: vaulteconomy.craft
+    aliases: [crafting]
+
+  anvil:
+    description: Открыть виртуальную наковальню
+    permission: vaulteconomy.anvil
+
+  ec:
+    description: Открыть эндересть
+    permission: vaulteconomy.enderchest
+    aliases: [enderchest]
+
+  sejf:
+    description: Открыть личный сейф (двойной сундук)
+    permission: vaulteconomy.sejf
+    aliases: [safe, сейф]
+
+  repair:
+    description: Починить предмет в руке
+    permission: vaulteconomy.repair
+
+  kastom:
+    description: "Кастомные предметы и печки"
+    permission: vaulteconomy.kastom
+    usage: "/kastom <furnace|potion>"
+
+  ah:
+    description: Аукцион
+    usage: /ah [sell <цена>]
+    aliases: [auction, market, auc, ac]
+
+  ahelp:
+    description: Справка по аукциону
+    usage: /ahelp
+    permission: vaulteconomy.auction.help
+    aliases: [ ahhelp, auctionhelp ]
+
+permissions:
+  vaulteconomy.auction.help:
+    description: Справка по аукциону
+    default: true
+
+  vaulteconomy.auction.sell:
+    description: Выставлять товары на продажу (/ah sell)
+    default: true  # ВСЕМ можно продавать
+
+  auction.slot.group.*:
+    description: Все слоты аукциона
+    default: op
+    children:
+      auction.slot.group.5: true
+      auction.slot.group.100: true
+
+  vaulteconomy.auction:
+    description: Доступ к аукциону (/ah)
+    default: true  # ВСЕМ игрокам можно открывать
+
+  vaulteconomy.admin:
+    description: Доступ к административным командам (give, take, set)
+    default: op
+
+  vaulteconomy.reload:
+    description: Перезагрузка конфигурации плагина
+    default: op
+
+  vaulteconomy.balance:
+    description: Доступ к команде /bits для просмотра баланса
+    default: op
+
+  vaulteconomy.gamemode:
+    description: Доступ к команде /gamemode для смены игрового режима
+    default: op
+
+  vaulteconomy.fly:
+    description: Доступ к полету
+    default: op
+
+  vaulteconomy.heal:
+    description: Доступ к команде /heal для лечения игрока
+    default: op
+
+  vaulteconomy.god:
+    description: Доступ к команде /god для включения режима Бога
+    default: op
+
+  vaulteconomy.tp:
+    description: Доступ к команде /tp
+    default: op
+
+  vaulteconomy.tpa:
+    description: Доступ к команде /tpa
+    default: true
+
+  vaulteconomy.tpahere:
+    description: Доступ к команде /tpahere
+    default: true
+
+  vaulteconomy.tpaaccept:
+    description: Доступ к команде /tpaaccept
+    default: op
+
+  vaulteconomy.tpadeny:
+    description: Доступ к команде /tpadeny
+    default: op
+
+  vaulteconomy.point.use:
+    description: Базовое использование команды /point (просмотр списка валют, баланс, pay)
+    default: op
+
+  vaulteconomy.point.admin:
+    description: Создание и редактирование валют (/point create, remove, give, take, remove)
+    default: op
+
+  vaulteconomy.pex:
+    description: Управление префиксами игроков (/pex)
+    default: op
+
+  vaulteconomy.spawn:
+    description: Использование /spawn
+    default: op
+
+  vaulteconomy.spawn.set:
+    description: Установка спавна (/spawn set)
+    default: op
+
+  vaulteconomy.home:
+    description: Использование /home
+    default: op
+
+  vaulteconomy.sethome:
+    description: Использование /sethome
+    default: op
+
+  vaulteconomy.delhome:
+    description: Использование /delhome
+    default: op
+
+  vaulteconomy.warp:
+    description: Использование /warp
+    default: op
+
+  vaulteconomy.setwarp:
+    description: Создание и удаление варпов (/setwarp, /delwarp)
+    default: op
+
+  vaulteconomy.delwarp:
+    description: Удаление варпов
+    default: op
+
+  vaulteconomy.baltop:
+    description: Просмотр топа балансов (/baltop)
+    default: op
+
+  vaulteconomy.clearchat:
+    description: Использование /clearchat
+    default: op
+
+  vaulteconomy.feed:
+    description: Использование /feed
+    default: op
+
+  vaulteconomy.ignore:
+    description: Использование /ignore
+    default: op
+
+  vaulteconomy.spawnmob:
+    description: Использование /sp для спавна мобов
+    default: op
+
+  vaulteconomy.warplist:
+    description: Просмотр списка варпов
+    default: op
+
+  vaulteconomy.homelist:
+    description: Просмотр списка своих домов
+    default: op
+
+  # ===== ПРАВА ДЛЯ УТИЛИТ =====
+  vaulteconomy.craft:
+    description: Доступ к виртуальному верстаку (/craft)
+    default: op
+
+  vaulteconomy.anvil:
+    description: Доступ к виртуальной наковальне (/anvil)
+    default: op
+
+  vaulteconomy.enderchest:
+    description: Доступ к эндерести (/ec)
+    default: op
+
+  vaulteconomy.sejf:
+    description: Доступ к личному сейфу (/sejf)
+    default: op
+
+  vaulteconomy.repair:
+    description: Доступ к ремонту предметов (/repair)
+    default: op
+
+  vaulteconomy.filter.admin:
+    description: "Управление фильтром чата"
+    default: op
+
+  vaulteconomy.filter.bypass:
+    description: "Имунитет"
+
+  vaulteconomy.kastom:
+    description: "Доступ к кастомным предметам"
+    default: op
+
+  auction.slot.group.100:
+    description: 100 слотов на аукционе
+    default: op
+
+  auction.slot.group.5:
+    description: 5 слотов на аукционе
+    default: true  # ВСЕМ по умолчанию 5 слотов

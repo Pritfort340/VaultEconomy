@@ -1,0 +1,187 @@
+# ============================================
+# VaultEconomy - Полный конфиг v1.0.0
+# ============================================
+
+currency:
+  symbol: "⛁"
+
+block-break-reward: 5.0
+
+# ===== НАСТРОЙКА КОЛИЧЕСТВА ДОМОВ =====
+homes:
+  max-homes:
+    default: 2      # Для обычных игроков
+    vip: 5          # Для игроков с правом vaulteconomy.vip
+    premium: 8      # Для игроков с правом vaulteconomy.premium
+    admin: 999      # Для админов (практически безлимит)
+
+# ===== ОСНОВНЫЕ СООБЩЕНИЯ =====
+messages:
+  balance: "&aВаш баланс: &6{balance}{symbol}"
+  earned: "&a+{amount}{symbol} | Баланс: &6{balance}"
+  no-permission: "&cУ вас нет прав"
+  player-not-found: "&cИгрок не найден"
+  not-a-number: "&cВведите корректное число"
+  insufficient-funds: "&cНедостаточно средств"
+  admin-give: "&aВы выдали &6{amount}{symbol} &aигроку &e{player}"
+  admin-take: "&cУ игрока &e{player} &cзабрали &6{amount}{symbol}"
+
+# ===== FLY =====
+fly:
+  messages:
+    fly-enabled: "&aПолет включен."
+    fly-disabled: "&cПолет выключен."
+    fly-disabled-on-damage: "&cВаш полет был отключен из-за получения урона."
+
+# ===== GAMEMODE =====
+gamemode:
+  default: "survival"
+  messages:
+    gm-no-permission: "&cУ вас нет прав для смены игрового режима."
+    gm-changed: "&aВы переключились в режим {mode}."
+
+# ===== GOD =====
+god:
+  enable-damage: true
+  prevent-other-damage: true
+  messages:
+    god-no-permission: "&cУ вас нет прав для использования режима Бога."
+    god-enabled: "&aВы включили режим Бога."
+    god-disabled: "&cВы выключили режим Бога."
+
+# ===== HEAL =====
+heal:
+  enable: true
+  heal-self: true
+  messages:
+    heal-enabled: "&aВы исцелили себя."
+    heal-disabled: "&cВы не можете исцелить себя."
+    heal-no-permission: "&cУ вас нет прав для использования этой команды."
+
+# ===== TELEPORT (TPA/TP) =====
+teleport:
+  delay: 5
+  cancel-on-damage: true
+  messages:
+    tp-request-sent: "&aВы отправили запрос на телепортацию игроку {player}."
+    tp-request-received: "&aИгрок {player} отправил вам запрос на телепортацию. Напишите /tpaaccept для принятия."
+    tp-accepted: "&aЗапрос на телепортацию принят. Вы телепортируетесь через 5 секунд."
+    tp-denied: "&cЗапрос на телепортацию отклонен."
+    tp-cancelled: "&cТелепортация отменена из-за получения урона."
+    tp-teleported: "&aВы телепортировались к {player}."
+
+# ===== ВИЗУАЛЬНЫЕ ЭФФЕКТЫ =====
+visual-effects:
+  enabled: true
+  effect: "PORTAL"
+
+# ===== МУЛЬТИВАЛЮТА (/point) =====
+points:
+  default-symbol: "★"
+  messages:
+    no-permission: "&cУ вас нет прав для этой команды."
+    currency-exists: "&cВалюта &e{name} &cуже существует."
+    currency-created: "&aВалюта &e{name} &aсоздана с символом &6{symbol}&a."
+    currency-removed: "&aВалюта &e{name} &aудалена."
+    currency-not-found: "&cВалюта &e{name} &cне найдена."
+    list-header: "&6Список валют:"
+    list-entry: "&e- {name} &7({display}) &6{symbol}"
+    not-a-number: "&cВведите корректное число."
+    player-not-found: "&cИгрок не найден."
+    insufficient-funds: "&cНедостаточно средств."
+    give: "&aВы выдали &6{amount}{symbol} &aвалюты &e{currency} &aигроку &e{player}."
+    take: "&cВы забрали &6{amount}{symbol} &cвалюты &e{currency} &cу игрока &e{player}."
+    pay-sender: "&aВы отправили &6{amount}{symbol} &aвалюты &e{currency} &aигроку &e{player}."
+    pay-receiver: "&aВы получили &6{amount}{symbol} &aвалюты &e{currency} &aот игрока &e{player}."
+
+# ===== ПРЕФИКСЫ ЧАТА =====
+chat:
+  default-prefix: "[Игрок]"
+  messages:
+    prefix-set: "&aПрефикс установлен: &r{prefix}"
+    prefix-reset: "&aПрефикс сброшен на стандартный."
+    prefix-too-long: "&cПрефикс не может быть длиннее 8 символов."
+    prefix-spaces: "&cПрефикс не может содержать пробелы."
+    player-not-found: "&cИгрок не найден."
+
+# ===== WARP/HOME/SPAWN =====
+warp:
+  messages:
+    spawn-set: "&aСпавн установлен."
+    spawn-not-set: "&cСпавн не установлен. Используйте /spawn set."
+    spawn-teleported: "&aВы телепортированы на спавн."
+    home-set: "&aДом '{name}' установлен."
+    home-not-set: "&cДом '{name}' не установлен. Используйте /sethome {name}."
+    home-teleported: "&aВы телепортированы к дому '{name}'."
+    home-deleted: "&aДом '{name}' удален."
+    warp-set: "&aВарп {name} установлен."
+    warp-not-found: "&cВарп {name} не найден."
+    warp-teleported: "&aВы телепортированы на варп {name}."
+    warp-deleted: "&aВарп {name} удален."
+    no-permission: "&cУ вас нет прав."
+    home-max-reached: "&cУ вас максимум домов ({max}). Удалите один через /delhome."
+    homes-list: "&aВаши дома: &e{names}"
+    warps-list: "&aСписок варпов: &e{names}"
+    no-homes: "&cУ вас нет домов."
+    no-warps: "&cНет доступных варпов."
+
+# ===== BALTOP =====
+baltop:
+  messages:
+    main-title: "&6&l===== &eТОП БАЛАНСОВ &6&l====="
+    points-title: "&6&l===== &eТОП {currency} &6&l====="
+    entry: "&f{place}. &e{player} &7- &6{amount}{symbol}"
+    no-permission: "&cУ вас нет прав для просмотра топа."
+    currency-not-found: "&cВалюта &e{name} &cне найдена."
+
+# ===== CLEARCHAT =====
+clearchat:
+  messages:
+    cleared: "&7Чат был очищен игроком &e{player}"
+
+# ===== FEED =====
+feed:
+  messages:
+    no-permission: "&cУ вас нет прав для этой команды."
+    fed: "&aВы были накормлены."
+    fed-other: "&aВы накормили игрока &e{player}"
+
+# ===== IGNORE =====
+ignore:
+  messages:
+    no-permission: "&cУ вас нет прав для этой команды."
+    usage: "&eИспользование: /ignore <игрок> <on|off>"
+    player-not-found: "&cИгрок не найден."
+    ignore-on: "&aТеперь вы игнорируете сообщения от &e{player}."
+    ignore-off: "&aВы больше не игнорируете &e{player}."
+
+# ===== SPAWN MOB (/sp) =====
+spawn-mob:
+  messages:
+    no-permission: "&cУ вас нет прав для этой команды."
+    usage: "&eИспользование: /sp <mob> [x] [y] [z] [NBT]"
+    unknown-entity: "&cНеизвестный моб: &e{name}"
+    coords-not-number: "&cКоординаты должны быть числами."
+    console-needs-coords: "&cИз консоли нужно указывать координаты."
+    spawned: "&aМоб &e{mob} &aзаспавнен."
+
+# ===== УТИЛИТЫ (/craft, /anvil, /ec, /sejf, /repair) =====
+utilities:
+  craft:
+    opened: "&a✅ Открыт виртуальный верстак!"
+  anvil:
+    opened: "&a🔨 Открыта виртуальная наковальня!"
+  enderchest:
+    opened: "&a✦ Открыта эндересть!"
+  sejf:
+    opened: "&a💰 Открыт ваш личный сейф!"
+  repair:
+    no-item: "&c❌ Возьмите предмет в руку!"
+    no-durability: "&c❌ Этот предмет нельзя починить!"
+    no-max-durability: "&c❌ Этот предмет не имеет прочности!"
+    repaired: "&a✅ Предмет полностью починен!"
+
+# ===== НАСТРОЙКИ ПЛАГИНА =====
+plugin:
+  reload-success: "&aПлагин перезагружен успешно!"
+  reload-error: "&cОшибка при перезагрузке плагина."
