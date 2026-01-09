@@ -1,70 +1,20 @@
-# ===========================================
-# АУКЦИОН - ДОНАТЕРЫ, ЛИМИТЫ, ЦЕНЫ, ТЕКСТЫ
-# ===========================================
-
-# ЛИМИТЫ ЛОТОВ ПО ГРУППАМ
 limits:
-  default: 3           # §7Обычные игроки
-  vip: 10              # §aVIP
-  premium: 25          # §bPremium
-  donor1: 50           # §6Донатер 1
-  donor2: 100          # §cДонатер 2
-  mvp: 200             # §dMVP
-  legend: 500          # §5Legend
-  admin: -1            # §4Админ (безлимит)
+  default: 3
+  vip: 10
+  premium: 25
+  admin: -1
 
-# ЦЕНЫ И НАЛОГИ
 prices:
-  listing-fee: 0.0        # Комиссия за выставление лота
-  tax-percent: 5.0        # Налог с продажи (%)
-  min-price: 1.0          # Минимальная цена
-  max-price: 10000000.0    # Максимальная цена
-  min-increment: 10.0     # Минимальный шаг ставки
+  tax-percent: 5.0
+  min-price: 1
+  max-price: 1000000
 
-# МАКСИМАЛЬНЫЕ КОЛИЧЕСТВА
-limits-items:
-  default: 64
-  vip: 128
-  premium: 256
-  donor1: 512
-  donor2: 640
-  mvp: 999
-  admin: 9999
-
-# СООБЩЕНИЯ
-messages:
-  no-permission: "§c§l✖ У вас нет прав на аукцион!"
-  no-item-in-hand: "§c§l✖ Держите предмет в главной руке!"
-  listing-limit-reached: "§c§l✖ Достигнут лимит лотов! §7({CURRENT}/{MAX})"
-  insufficient-funds: "§c§l✖ Недостаточно денег! §eТребуется: §f{PRICE}"
-  purchase-success: "§a§l✓ Покупка успешна! §7-§e{PRICE}"
-  sold-success: "§a§l✓ Ваш лот куплен! §7+§e{PRICE}"
-  enter-price: "§e§lВведите цену лота §7(мин: {MIN}, макс: {MAX}):"
-  invalid-price: "§c§l✖ Неверная цена! §7Введите число от {MIN} до {MAX}"
-  listing-added: "§a§l✓ Лот выставлен за §e{PRICE} §7({TIME})"
-  no-listings: "§7§oНа аукционе пока пусто..."
-  refresh: "§e§lАукцион обновлен!"
-
-# ЗВУКИ
-sounds:
-  click: "UI_BUTTON_CLICK"
-  buy: "ENTITY_EXPERIENCE_ORB_PICKUP"
-  sell: "ENTITY_PLAYER_LEVELUP"
-  error: "ENTITY_VILLAGER_NO"
-
-# ВРЕМЕНАХ
 timings:
-  listing-duration: 3600    # Длительность лота (сек)
-  auto-refresh: 5          # Автообновление (сек)
-  save-interval: 300       # Сохранение данных (сек)
+  duration: 3600
 
-# ГРУППЫ ДЛЯ ПРОВЕРКИ (LuckPerms/Vault)
-groups:
-  default: "default"
-  vip: "vip"
-  premium: "premium"
-  donor1: "donator1"
-  donor2: "donator2"
-  mvp: "mvp"
-  legend: "legend"
-  admin: "admin"
+messages:
+  no-permission: "&c❌ Нет прав."
+  limit-reached: "&c❌ Лимит лотов ({current}/{max})"
+  success: "&a✔ Лот выставлен за {price}{symbol}"
+  bought: "&a✔ Лот куплен за {price}{symbol}"
+  sold: "&a✔ Ваш лот продан за {price}{symbol}"

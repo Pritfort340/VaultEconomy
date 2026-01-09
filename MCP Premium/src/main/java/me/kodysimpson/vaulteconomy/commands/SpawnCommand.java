@@ -1,6 +1,7 @@
 package me.kodysimpson.vaulteconomy.commands;
 
 import me.kodysimpson.vaulteconomy.modules.teleport.WarpManager;
+import me.kodysimpson.vaulteconomy.pvp.PvpManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -11,9 +12,11 @@ import org.bukkit.entity.Player;
 public class SpawnCommand implements CommandExecutor {
 
     private final WarpManager warpManager;
+    private final PvpManager pvpManager;
 
-    public SpawnCommand(WarpManager warpManager) {
+    public SpawnCommand(WarpManager warpManager, PvpManager pvpManager) {
         this.warpManager = warpManager;
+        this.pvpManager = pvpManager;
     }
 
     private String color(String s) {
@@ -24,32 +27,24 @@ public class SpawnCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("Команда только для игроков.");
+            sender.sendMessage("§cКоманда только для игроков.");
             return true;
         }
 
-        if (args.length == 0) {
-            Location spawn = warpManager.getSpawn();
-            if (spawn == null) {
-                p.sendMessage(color("&cТочка спавна еще не установлена."));
-                return true;
-            }
-            p.teleport(spawn);
-            p.sendMessage(color("&aВы телепортированы на спавн."));
+        // ❌ запрет во время PvP
+        if (pvpManager.isInPvp(p) && !p.hasPermission("vaulteconomy.spawn.pvp.bypass")) {
+            p.sendMessage(color("&c❌ Нельзя использовать &e/spawn &cво время PvP!"));
             return true;
         }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("set")) {
-            if (!p.hasPermission("vaulteconomy.spawn.set")) {
-                p.sendMessage(color("&cУ вас нет прав на установку спавна."));
-                return true;
-            }
-            warpManager.setSpawn(p.getLocation());
-            p.sendMessage(color("&aСпавн установлен в вашей текущей позиции."));
+        Location spawn = warpManager.getSpawn();
+        if (spawn == null) {
+            p.sendMessage(color("&c❌ Спавн еще не установлен."));
             return true;
         }
 
-        p.sendMessage(color("&cИспользование: &e/spawn &cили &e/spawn set"));
+        p.teleport(spawn);
+        p.sendMessage(color("&a✔ Вы телепортированы на спавн."));
         return true;
     }
 }

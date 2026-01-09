@@ -2,24 +2,27 @@ package me.kodysimpson.vaulteconomy.economy;
 
 import org.bukkit.OfflinePlayer;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 public class PointCurrency {
 
-    private final String name;          // id валюты (coins, gems...)
-    private final String displayName;   // красивое имя
-    private final String symbol;        // символ, напр. ★
+    private final String name;
+    private final String displayName;
+    private final String symbol;
 
-    // ключом храним UUID игрока в виде строки
-    private final Map<String, Double> balances = new HashMap<>();
+    private final Map<String, Double> balances =
+            Collections.synchronizedMap(new HashMap<>());
 
     public PointCurrency(String name, String displayName, String symbol) {
         this.name = name.toLowerCase();
         this.displayName = displayName;
         this.symbol = symbol;
     }
+
+    /* ===================== INFO ===================== */
 
     public String getName() {
         return name;
@@ -33,31 +36,44 @@ public class PointCurrency {
         return symbol;
     }
 
-    private String key(OfflinePlayer p) {
-        UUID uuid = p.getUniqueId();
-        return uuid == null ? p.getName() : uuid.toString();
+    /* ===================== BALANCES ===================== */
+
+    public double getBalance(OfflinePlayer player) {
+        return balances.getOrDefault(getKey(player), 0.0);
     }
 
-    public double getBalance(OfflinePlayer p) {
-        return balances.getOrDefault(key(p), 0.0);
+    public void setBalance(OfflinePlayer player, double amount) {
+        balances.put(getKey(player), Math.max(0, amount));
     }
 
-    public void setBalance(OfflinePlayer p, double amount) {
-        balances.put(key(p), amount);
+    public boolean has(OfflinePlayer player, double amount) {
+        return getBalance(player) >= amount;
     }
 
-    public void deposit(OfflinePlayer p, double amount) {
-        setBalance(p, getBalance(p) + amount);
+    /* ===================== API (для команд) ===================== */
+
+    // используется в /point give
+    public void deposit(OfflinePlayer player, double amount) {
+        setBalance(player, getBalance(player) + amount);
     }
 
-    public boolean withdraw(OfflinePlayer p, double amount) {
-        double cur = getBalance(p);
-        if (cur < amount) return false;
-        setBalance(p, cur - amount);
+    // используется в /point take / pay
+    public boolean withdraw(OfflinePlayer player, double amount) {
+        if (!has(player, amount)) return false;
+        setBalance(player, getBalance(player) - amount);
         return true;
     }
 
+    /* ===================== SAVE SUPPORT ===================== */
+
     public Map<String, Double> getBalances() {
         return balances;
+    }
+
+    /* ===================== UTILS ===================== */
+
+    private String getKey(OfflinePlayer player) {
+        UUID uuid = player.getUniqueId();
+        return uuid != null ? uuid.toString() : player.getName();
     }
 }

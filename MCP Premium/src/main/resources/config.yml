@@ -5,7 +5,7 @@
 currency:
   symbol: "⛁"
 
-block-break-reward: 5.0
+block-break-reward: 0.5
 
 # ===== НАСТРОЙКА КОЛИЧЕСТВА ДОМОВ =====
 homes:
@@ -28,10 +28,11 @@ messages:
 
 # ===== FLY =====
 fly:
-  messages:
-    fly-enabled: "&aПолет включен."
-    fly-disabled: "&cПолет выключен."
-    fly-disabled-on-damage: "&cВаш полет был отключен из-за получения урона."
+  enabled: "&a✈ Полет ВКЛЮЧЕН"
+  disabled: "&c✈ Полет ОТКЛЮЧЕН"
+  damage: "&c✈ Полет отключен (урон)"
+  attack: "&c✈ Полет отключен (атака)"
+  cooldown: "&c✈ Полет на кулдауне: &e{seconds}с"
 
 # ===== GAMEMODE =====
 gamemode:

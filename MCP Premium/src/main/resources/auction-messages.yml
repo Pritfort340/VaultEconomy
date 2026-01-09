@@ -1,40 +1,5 @@
-# АУКЦИОН - СООБЩЕНИЯ (редактируйте под проект)
-messages:
-  prefix: "§6[АУКЦИОН] §f"
-
-  # Главное меню
-  main-title: "§6§lАУКЦИОН"
-  balance-slots: "§6§lБАЛАНС И СЛОТЫ"
-  slots-used: "§7Слоты: §e{used}/{max}"
-  slots-available: "§7Доступно: §a{available}"
-  my-items: "§c§lМОИ ТОВАРЫ"
-
-  # Категории
-  all-items: "§e§lВСЕ ТОВАРЫ"
-  weapons: "§b§lОРУЖИЕ"
-  tools: "§6§lИНСТРУМЕНТЫ"
-  resources: "§a§lРЕСУРСЫ"
-
-  # Аукцион
-  auction-title: "§b§lЛОТЫ {category} §7({page}/{total})"
-  back-button: "§e◀ Назад"
-  close-button: "§c§l❌ Закрыть"
-  next-button: "§eВперед ▶"
-
-  # Сообщения
-  no-money: "§c§lНедостаточно средств!"
-  purchase-success: "§a§l✓ Покупка успешна! §e-${price}"
-  seller-received: "§7Продавец получил: §e${seller_amount} §7(комиссия 3%)"
-  item-listed: "{player} §7выставил §e$${price} §7({category})"
-  item-returned: "§a§l✓ Товар возвращен в инвентарь!"
-  no-items: "§7У вас нет товаров на аукционе"
-
-  # Слоты
-  no-slots: "§c§l❌ Нет слотов! Использовано: §e{used}/{max}"
-  buy-permission: "§7Купите пермишн §eauction.slot.group.{next} §7для +{next} слотов"
-  slots-info: "§7Слоты: §e{used}/{max}"
-
-  # Ошибки
-  no-item-hand: "§c§lДержите предмет в главной руке!"
-  invalid-price: "§c§lНеверный формат цены!"
-  price-range: "§c§lЦена должна быть от 1 до 1,000,000!"
+item-listed: "&aИгрок &e%player% &aвыставил предмет за &e%price% &a(&7%category%&a)"
+purchase-success: "&aВы купили предмет за &e%price%"
+no-money: "&cНедостаточно средств"
+item-returned: "&eПредмет возвращён вам"
+pvp-block: "&cНельзя использовать аукцион в PvP"

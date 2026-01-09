@@ -1,87 +1,164 @@
 package me.kodysimpson.vaulteconomy.modules.teleport;
 
 import me.kodysimpson.vaulteconomy.VaultEconomy;
-import org.bukkit.ChatColor;
-import org.bukkit.Particle;
+import me.kodysimpson.vaulteconomy.pvp.PvpManager;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.event.Listener;
-import org.bukkit.event.EventHandler;
+import org.bukkit.event.*;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class TeleportModule implements Listener {
 
-    private final Map<Player, BukkitRunnable> teleportRequests = new HashMap<>();
-    private final long teleportDelay = VaultEconomy.getInstance().getConfig().getLong("teleport.delay", 100L);  // Получаем задержку из конфигурации
+    private final VaultEconomy plugin;
+    private final PvpManager pvpManager;
 
-    public void sendTpRequest(Player player, Player target) {
-        target.sendMessage(ChatColor.GREEN + player.getName() + " хочет телепортироваться к вам. Напишите /tpaaccept для принятия.");
-        player.sendMessage(ChatColor.GREEN + "Запрос на телепортацию отправлен игроку " + target.getName());
+    private final Map<UUID, TeleportRequest> requests = new HashMap<>();
+    private final Map<UUID, BukkitRunnable> activeTeleports = new HashMap<>();
+
+    private static final long TELEPORT_DELAY = 100L; // 5 секунд
+
+    public TeleportModule(VaultEconomy plugin, PvpManager pvpManager) {
+        this.plugin = plugin;
+        this.pvpManager = pvpManager;
     }
 
-    public void teleportPlayerWithDelay(Player player, Player target) {
-        player.sendMessage(ChatColor.GREEN + "Телепортация к игроку " + target.getName() + " через 5 секунд...");
+    /* ===================== REQUESTS ===================== */
 
-        BukkitRunnable teleportTask = new BukkitRunnable() {
-            @Override
-            public void run() {
-                teleportPlayer(player, target);
-            }
-        };
+    public void sendTpa(Player from, Player to) {
+        if (blocked(from, to)) return;
 
-        teleportRequests.put(player, teleportTask);
-        teleportTask.runTaskLater(VaultEconomy.getInstance(), teleportDelay);  // Задержка между телепортациями
+        requests.put(to.getUniqueId(),
+                new TeleportRequest(from.getUniqueId(), to.getUniqueId(), TeleportRequest.Type.TPA));
+
+        to.sendMessage("§e" + from.getName() + " §aхочет телепортироваться к вам (§e/tpaaccept§a)");
+        from.sendMessage("§aЗапрос /tpa отправлен игроку " + to.getName());
     }
 
-    public void teleportPlayer(Player player, Player target) {
-        player.teleport(target.getLocation());
-        player.sendMessage(ChatColor.GREEN + "Вы телепортировались к " + target.getName());
-        target.sendMessage(ChatColor.GREEN + "Игрок " + player.getName() + " телепортировался к вам");
+    public void sendTpahere(Player from, Player to) {
+        if (blocked(from, to)) return;
 
-        // Визуальные эффекты (портал)
-        player.getWorld().spawnParticle(Particle.PORTAL, player.getLocation(), 50);
+        requests.put(to.getUniqueId(),
+                new TeleportRequest(from.getUniqueId(), to.getUniqueId(), TeleportRequest.Type.TPAHERE));
+
+        to.sendMessage("§e" + from.getName() + " §aхочет телепортировать вас к себе (§e/tpaaccept§a)");
+        from.sendMessage("§aЗапрос /tpahere отправлен игроку " + to.getName());
     }
 
-    public void teleportHere(Player player, Player target) {
-        target.teleport(player.getLocation());
-        target.sendMessage(ChatColor.GREEN + "Вы телепортировались к " + player.getName());
-        player.sendMessage(ChatColor.GREEN + "Игрок " + target.getName() + " телепортировался к вам");
+    /* ===================== ACCEPT / DENY ===================== */
 
-        // Визуальные эффекты (портал)
-        target.getWorld().spawnParticle(Particle.PORTAL, target.getLocation(), 50);
-    }
+    public void accept(Player target) {
+        TeleportRequest req = requests.remove(target.getUniqueId());
+        if (req == null) {
+            target.sendMessage("§cНет активных запросов.");
+            return;
+        }
 
-    public void acceptTpaRequest(Player player) {
-        if (teleportRequests.containsKey(player)) {
-            teleportRequests.get(player).run();
-            teleportRequests.remove(player);
-            player.sendMessage(ChatColor.GREEN + "Вы приняли запрос на телепортацию.");
+        Player requester = Bukkit.getPlayer(req.getRequester());
+        if (requester == null || !requester.isOnline()) {
+            target.sendMessage("§cИгрок оффлайн.");
+            return;
+        }
+
+        if (blocked(requester, target)) return;
+
+        Player from;
+        Player to;
+
+        if (req.getType() == TeleportRequest.Type.TPA) {
+            from = requester;
+            to = target;
         } else {
-            player.sendMessage(ChatColor.RED + "У вас нет активного запроса на телепортацию.");
+            from = target;
+            to = requester;
+        }
+
+        startTeleport(from, to);
+    }
+
+    public void deny(Player target) {
+        if (requests.remove(target.getUniqueId()) != null) {
+            target.sendMessage("§cЗапрос отклонён.");
+        } else {
+            target.sendMessage("§cНет активных запросов.");
         }
     }
 
-    public void denyTpaRequest(Player player) {
-        if (teleportRequests.containsKey(player)) {
-            teleportRequests.remove(player);
-            player.sendMessage(ChatColor.RED + "Запрос на телепортацию отклонен.");
-        } else {
-            player.sendMessage(ChatColor.RED + "У вас нет активного запроса на телепортацию.");
+    /* ===================== INSTANT TP ===================== */
+
+    public void instantTeleport(Player from, Player to) {
+        if (blocked(from, to)) return;
+
+        from.teleport(to.getLocation());
+        from.sendMessage("§aТелепорт выполнен.");
+    }
+
+    /* ===================== TELEPORT CORE ===================== */
+
+    private void startTeleport(Player from, Player to) {
+        from.sendMessage("§eТелепорт через 5 секунд. §cНе двигайтесь!");
+
+        BukkitRunnable task = new BukkitRunnable() {
+            @Override
+            public void run() {
+                activeTeleports.remove(from.getUniqueId());
+
+                if (!from.isOnline() || !to.isOnline()) return;
+
+                if (pvpManager.isInPvp(from) || pvpManager.isInPvp(to)) {
+                    from.sendMessage("§cТелепорт отменён — PvP!");
+                    return;
+                }
+
+                from.teleport(to.getLocation());
+                from.sendMessage("§aТелепорт завершён!");
+                to.sendMessage("§aИгрок §e" + from.getName() + " §aтелепортировался к вам.");
+
+                from.getWorld().spawnParticle(Particle.PORTAL, from.getLocation(), 50);
+            }
+        };
+
+        activeTeleports.put(from.getUniqueId(), task);
+        task.runTaskLater(plugin, TELEPORT_DELAY);
+    }
+
+    /* ===================== CANCEL ===================== */
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        if (!activeTeleports.containsKey(player.getUniqueId())) return;
+
+        if (event.getFrom().distance(event.getTo()) > 0.1) {
+            cancelTeleport(player, "§cТелепорт отменён — вы двигались!");
         }
     }
 
     @EventHandler
-    public void onPlayerDamage(EntityDamageEvent event) {
+    public void onDamage(EntityDamageEvent event) {
         if (event.getEntity() instanceof Player player) {
-            BukkitRunnable teleportTask = teleportRequests.get(player);
-            if (teleportTask != null) {
-                teleportTask.cancel();
-                teleportRequests.remove(player);
-                player.sendMessage(ChatColor.RED + "Телепортация отменена из-за получения урона.");
-            }
+            cancelTeleport(player, "§cТелепорт отменён — получен урон!");
         }
+    }
+
+    private void cancelTeleport(Player player, String msg) {
+        BukkitRunnable task = activeTeleports.remove(player.getUniqueId());
+        if (task != null) {
+            task.cancel();
+            player.sendMessage(msg);
+        }
+    }
+
+    /* ===================== UTIL ===================== */
+
+    private boolean blocked(Player a, Player b) {
+        if (pvpManager.isInPvp(a) || pvpManager.isInPvp(b)) {
+            a.sendMessage("§cТелепортация запрещена во время PvP!");
+            return true;
+        }
+        return false;
     }
 }

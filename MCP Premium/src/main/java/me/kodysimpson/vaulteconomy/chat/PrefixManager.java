@@ -12,10 +12,7 @@ public class PrefixManager {
 
     private final VaultEconomy plugin;
     private final File file;
-    private final YamlConfiguration data;
-
-    // стандартный префикс
-    private final String defaultPrefix = "[Игрок]";
+    private YamlConfiguration data;
 
     public PrefixManager(VaultEconomy plugin) {
         this.plugin = plugin;
@@ -35,19 +32,25 @@ public class PrefixManager {
 
     public String getPrefix(OfflinePlayer player) {
         UUID uuid = player.getUniqueId();
-        String key = "prefixes." + uuid;
-        return data.getString(key, defaultPrefix);
+
+        String stored = data.getString("prefixes." + uuid);
+        if (stored != null && !stored.isEmpty()) {
+            return stored;
+        }
+
+        return plugin.getConfig().getString(
+                "chat.default-prefix",
+                "&7[Игрок]"
+        );
     }
 
     public void setPrefix(OfflinePlayer player, String prefix) {
-        UUID uuid = player.getUniqueId();
-        data.set("prefixes." + uuid, prefix);
+        data.set("prefixes." + player.getUniqueId(), prefix);
         save();
     }
 
     public void resetPrefix(OfflinePlayer player) {
-        UUID uuid = player.getUniqueId();
-        data.set("prefixes." + uuid, null);
+        data.set("prefixes." + player.getUniqueId(), null);
         save();
     }
 
@@ -57,5 +60,17 @@ public class PrefixManager {
         } catch (IOException e) {
             plugin.getLogger().severe("Не удалось сохранить prefixes.yml");
         }
+    }
+
+    /* ===================== RELOAD ===================== */
+
+    public void reload() {
+        // перезагружаем config.yml (для default-prefix)
+        plugin.reloadConfig();
+
+        // перечитываем prefixes.yml
+        this.data = YamlConfiguration.loadConfiguration(file);
+
+        plugin.getLogger().info("PrefixManager перезагружен");
     }
 }

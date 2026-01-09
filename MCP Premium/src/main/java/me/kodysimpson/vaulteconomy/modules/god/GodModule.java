@@ -1,27 +1,38 @@
 package me.kodysimpson.vaulteconomy.modules.god;
 
+import me.kodysimpson.vaulteconomy.pvp.PvpManager;
 import org.bukkit.entity.Player;
 
 public class GodModule {
 
-    // Метод для активации режима Бога
+    private final PvpManager pvpManager;
+
+    public GodModule(PvpManager pvpManager) {
+        this.pvpManager = pvpManager;
+    }
+
     public void enableGodMode(Player player) {
-        player.setInvulnerable(true);  // Игрок не будет получать урон
+        player.setInvulnerable(true);
     }
 
-    // Метод для деактивации режима Бога
     public void disableGodMode(Player player) {
-        player.setInvulnerable(false);  // Игрок снова будет получать урон
+        player.setInvulnerable(false);
     }
 
-    // Метод для переключения режима Бога
     public void toggleGodMode(Player player) {
+
+        // ❌ ЗАПРЕТ GOD ВО ВРЕМЯ PvP
+        if (pvpManager.isInPvp(player)) {
+            player.sendMessage("§cНельзя включить God-режим во время PvP!");
+            return;
+        }
+
         if (player.isInvulnerable()) {
-            disableGodMode(player);  // Если режим Бога включен, выключаем его
-            player.sendMessage("Режим Бога выключен.");
+            disableGodMode(player);
+            player.sendMessage("§cРежим Бога выключен.");
         } else {
-            enableGodMode(player);  // Если режим Бога выключен, включаем его
-            player.sendMessage("Режим Бога включен.");
+            enableGodMode(player);
+            player.sendMessage("§aРежим Бога включен.");
         }
     }
 }

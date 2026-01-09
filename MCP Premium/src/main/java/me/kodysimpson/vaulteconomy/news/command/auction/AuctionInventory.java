@@ -12,126 +12,89 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class AuctionInventory implements Listener {
-    public static List<AuctionItem> items = new ArrayList<>();
+
+    public static final List<AuctionItem> items = new ArrayList<>();
 
     public void openMain(Player p) {
+
+        if (VaultEconomy.getInstance().getPvpManager().isInPvp(p)) {
+            p.sendMessage(AuctionMessages.get("pvp-block"));
+            return;
+        }
+
         Inventory inv = Bukkit.createInventory(null, 27, "§6§lАУКЦИОН");
 
-        // Категории
-        inv.setItem(10, createItem(Material.CHEST, "§e§lВСЕ ТОВАРЫ", "§7Открыть все лоты"));
-        inv.setItem(12, createItem(Material.DIAMOND_SWORD, "§b§lОРУЖИЕ", "§7Мечи, луки, арбалеты"));
-        inv.setItem(14, createItem(Material.DIAMOND_PICKAXE, "§6§lИНСТРУМЕНТЫ", "§7Кирки, лопаты, топоры"));
-        inv.setItem(16, createItem(Material.EMERALD, "§a§lРЕСУРСЫ", "§7Руда, блоки, материалы"));
+        inv.setItem(10, createItem(Material.CHEST, "§e§lВСЕ ТОВАРЫ"));
+        inv.setItem(12, createItem(Material.DIAMOND_SWORD, "§b§lОРУЖИЕ"));
+        inv.setItem(14, createItem(Material.DIAMOND_PICKAXE, "§6§lИНСТРУМЕНТЫ"));
+        inv.setItem(16, createItem(Material.EMERALD, "§a§lРЕСУРСЫ"));
 
-        // ✅ БАЛАНС + СЛОТЫ
+        int used = getPlayerSlotsUsed(p.getUniqueId());
+        int max = getMaxSlots(p);
+
         ItemStack info = createItem(Material.GOLD_INGOT, "§6§lБАЛАНС И СЛОТЫ");
-        ItemMeta infoMeta = info.getItemMeta();
-        int slotsUsed = getPlayerSlotsUsed(p.getUniqueId());
-        int maxSlots = getMaxSlots(p);
-        infoMeta.setLore(Arrays.asList(
-                "§7Ваш баланс: §e$" + VaultEconomy.getInstance().getEconomy().format(
-                        VaultEconomy.getInstance().getEconomy().getBalance(p)
-                ),
-                "",
-                "§7Слоты: §e" + slotsUsed + "/" + maxSlots,
-                "§7Доступно: §a" + (maxSlots - slotsUsed)
-        ));
-        info.setItemMeta(infoMeta);
-        inv.setItem(22, info);
+        ItemMeta meta = info.getItemMeta();
+        if (meta != null) {
+            meta.setLore(Arrays.asList(
+                    "§7Баланс: §e$" + (int) VaultEconomy.getInstance().getEconomy().getBalance(p),
+                    "",
+                    "§7Слоты: §e" + used + "/" + max,
+                    "§7Доступно: §a" + (max - used)
+            ));
+            info.setItemMeta(meta);
+        }
 
-        inv.setItem(4, createItem(Material.REDSTONE_BLOCK, "§c§lМОИ ТОВАРЫ", "§7Забрать свои лоты"));
+        inv.setItem(22, info);
+        inv.setItem(4, createItem(Material.REDSTONE_BLOCK, "§c§lМОИ ТОВАРЫ"));
         p.openInventory(inv);
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
+
+        if (!(e.getWhoClicked() instanceof Player p)) return;
         String title = e.getView().getTitle();
-        if (!title.equals("§6§lАУКЦИОН") && !title.contains("ЛОТЫ") && !title.equals("§c§lМОИ ТОВАРЫ"))
+
+        if (!title.contains("АУКЦИОН") && !title.contains("ЛОТЫ") && !title.contains("МОИ ТОВАРЫ"))
             return;
 
         e.setCancelled(true);
-        Player p = (Player) e.getWhoClicked();
-        ItemStack item = e.getCurrentItem();
-        if (item == null || item.getType() == Material.AIR) return;
 
-        String name = item.getItemMeta().getDisplayName();
+        ItemStack clicked = e.getCurrentItem();
+        if (clicked == null || clicked.getType() == Material.AIR) return;
 
-        // Главное меню
+        String name = clicked.hasItemMeta() ? clicked.getItemMeta().getDisplayName() : "";
+
         if (title.equals("§6§lАУКЦИОН")) {
-            if (name.equals("§e§lВСЕ ТОВАРЫ")) openAuction(p, "ВСЕ", 1);
-            else if (name.equals("§b§lОРУЖИЕ")) openAuction(p, "ОРУЖИЕ", 1);
-            else if (name.equals("§6§lИНСТРУМЕНТЫ")) openAuction(p, "ИНСТРУМЕНТЫ", 1);
-            else if (name.equals("§a§lРЕСУРСЫ")) openAuction(p, "РЕСУРСЫ", 1);
-            else if (name.equals("§c§lМОИ ТОВАРЫ")) openMyItems(p);
+            if (name.contains("ВСЕ")) openAuction(p, "ВСЕ", 1);
+            if (name.contains("ОРУЖИЕ")) openAuction(p, "ОРУЖИЕ", 1);
+            if (name.contains("ИНСТРУМЕНТЫ")) openAuction(p, "ИНСТРУМЕНТЫ", 1);
+            if (name.contains("РЕСУРСЫ")) openAuction(p, "РЕСУРСЫ", 1);
+            if (name.contains("МОИ")) openMyItems(p);
             return;
         }
 
-        // Аукцион
         if (title.contains("ЛОТЫ")) {
-            if (name.equals("§c§l❌ Закрыть")) {
-                p.closeInventory();
-                return;
-            }
-            if (name.equals("§e◀ Назад")) {
-                openAuction(p, getCategory(title), getPage(title) - 1);
-                return;
-            }
-            if (name.equals("§eВперед ▶")) {
-                openAuction(p, getCategory(title), getPage(title) + 1);
-                return;
-            }
-            buyItem(p, item);
-            return;
+            if (name.contains("Назад")) openAuction(p, getCategory(title), getPage(title) - 1);
+            else if (name.contains("Вперед")) openAuction(p, getCategory(title), getPage(title) + 1);
+            else if (name.contains("Закрыть")) p.closeInventory();
+            else buyItem(p, clicked);
         }
 
-        // Мои товары
-        if (title.equals("§c§lМОИ ТОВАРЫ")) {
-            if (name.equals("§c§l❌ Закрыть")) {
-                p.closeInventory();
-                return;
-            }
-            returnMyItem(p, item);
+        if (title.contains("МОИ ТОВАРЫ")) {
+            if (name.contains("Закрыть")) p.closeInventory();
+            else returnMyItem(p, clicked);
         }
-    }
-
-    // ✅ ПЕРМИШЕНЫ СЛОТОВ
-    public static int getMaxSlots(Player p) {
-        int maxSlots = 0;
-        for (int i = 1; i <= 1000; i++) {
-            if (p.hasPermission("auction.slot.group." + i)) {
-                maxSlots = i;
-            }
-        }
-        return Math.max(maxSlots, 5);
-    }
-
-    public static int getPlayerSlotsUsed(UUID playerId) {
-        int count = 0;
-        AuctionInventory.cleanup(); // ✅ Очистка перед подсчетом
-        for (AuctionItem item : items) {
-            if (item.seller.equals(playerId)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    public static boolean canSell(Player p) {
-        int used = getPlayerSlotsUsed(p.getUniqueId());
-        int max = getMaxSlots(p);
-        return used < max;
     }
 
     private void openAuction(Player p, String category, int page) {
-        cleanup();
-        List<AuctionItem> filtered = new ArrayList<>();
 
+        cleanup();
+
+        List<AuctionItem> filtered = new ArrayList<>();
         for (AuctionItem item : items) {
             if (category.equals("ВСЕ") || item.category.equals(category)) {
                 filtered.add(item);
@@ -139,16 +102,21 @@ public class AuctionInventory implements Listener {
         }
 
         int perPage = 28;
-        int totalPages = (int) Math.ceil(filtered.size() / (double) perPage);
-        if (page > totalPages) page = totalPages;
-        if (page < 1) page = 1;
+        int totalPages = Math.max(1, (int) Math.ceil(filtered.size() / (double) perPage));
+        page = Math.max(1, Math.min(page, totalPages));
 
-        Inventory inv = Bukkit.createInventory(null, 54, "§b§lЛОТЫ " + category + " §7(" + page + "/" + totalPages + ")");
+        Inventory inv = Bukkit.createInventory(null, 54,
+                "§b§lЛОТЫ " + category + " §7(" + page + "/" + totalPages + ")");
 
-        int[] slots = {10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34, 37,38,39,40,41,42,43};
+        int[] slots = {
+                10,11,12,13,14,15,16,
+                19,20,21,22,23,24,25,
+                28,29,30,31,32,33,34,
+                37,38,39,40,41,42,43
+        };
+
         int start = (page - 1) * perPage;
-
-        for (int i = 0; i < slots.length && (start + i) < filtered.size(); i++) {
+        for (int i = 0; i < slots.length && start + i < filtered.size(); i++) {
             inv.setItem(slots[i], filtered.get(start + i).getDisplay());
         }
 
@@ -159,76 +127,110 @@ public class AuctionInventory implements Listener {
         p.openInventory(inv);
     }
 
+    private void buyItem(Player p, ItemStack clicked) {
+
+        Iterator<AuctionItem> it = items.iterator();
+        while (it.hasNext()) {
+            AuctionItem item = it.next();
+
+            if (!item.getDisplay().isSimilar(clicked)) continue;
+
+            if (VaultEconomy.getInstance().getEconomy().getBalance(p) < item.price) {
+                p.sendMessage(AuctionMessages.get("no-money"));
+                return;
+            }
+
+            VaultEconomy.getInstance().getEconomy().withdrawPlayer(p, item.price);
+            VaultEconomy.getInstance().getEconomy()
+                    .depositPlayer(Bukkit.getOfflinePlayer(item.seller), item.price * 0.97);
+
+            p.getInventory().addItem(item.item.clone());
+            it.remove();
+
+            p.sendMessage(AuctionMessages.get("purchase-success",
+                    "price", String.valueOf((int) item.price)));
+            p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1f, 1.2f);
+            p.closeInventory();
+            return;
+        }
+    }
+
     private void openMyItems(Player p) {
+
         cleanup();
         Inventory inv = Bukkit.createInventory(null, 54, "§c§lМОИ ТОВАРЫ");
-        int[] slots = {10,11,12,13,14,15,16, 19,20,21,22,23,24,25, 28,29,30,31,32,33,34, 37,38,39,40,41,42,43};
-        int slotIndex = 0;
 
-        boolean hasItems = false;
+        int[] slots = {
+                10,11,12,13,14,15,16,
+                19,20,21,22,23,24,25,
+                28,29,30,31,32,33,34,
+                37,38,39,40,41,42,43
+        };
+
+        int index = 0;
         for (AuctionItem item : items) {
-            if (item.seller.equals(p.getUniqueId()) && slotIndex < slots.length) {
-                inv.setItem(slots[slotIndex], item.getDisplay());
-                hasItems = true;
-                slotIndex++;
+            if (item.seller.equals(p.getUniqueId()) && index < slots.length) {
+                inv.setItem(slots[index++], item.getDisplay());
             }
         }
 
-        if (!hasItems) {
-            inv.setItem(22, createItem(Material.BARRIER, "§7У вас нет товаров на аукционе"));
+        if (index == 0) {
+            inv.setItem(22, createItem(Material.BARRIER, "§7У вас нет товаров"));
         }
+
         inv.setItem(49, createItem(Material.BARRIER, "§c§l❌ Закрыть"));
         p.openInventory(inv);
     }
 
-    // ✅ ✅ ✅ КОМИССИЯ 3% (100$ → 97$)
-    private void buyItem(Player p, ItemStack clicked) {
-        cleanup();
-        for (AuctionItem item : items) {
-            if (item.getDisplay().isSimilar(clicked)) {
-                if (VaultEconomy.getInstance().getEconomy().getBalance(p) < item.price) {
-                    p.sendMessage("§c§lНедостаточно средств!");
-                    p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 0.8f);
-                    return;
-                }
+    private void returnMyItem(Player p, ItemStack clicked) {
 
-                // ✅ ПОКУПАТЕЛЬ платит ПОЛНУЮ цену
-                VaultEconomy.getInstance().getEconomy().withdrawPlayer(p, item.price);
-
-                // ✅ ПРОДАВЦУ 97% (3% комиссия)
-                double sellerGets = item.price * 0.97;
-                VaultEconomy.getInstance().getEconomy().depositPlayer(
-                        Bukkit.getOfflinePlayer(item.seller), sellerGets);
-
+        Iterator<AuctionItem> it = items.iterator();
+        while (it.hasNext()) {
+            AuctionItem item = it.next();
+            if (item.seller.equals(p.getUniqueId()) && item.getDisplay().isSimilar(clicked)) {
                 p.getInventory().addItem(item.item.clone());
-                items.remove(item);
-
-                p.sendMessage("§a§l✓ Покупка успешна! §e-$" + (int)item.price);
-                p.sendMessage("§7Продавец получил: §e$" + (int)sellerGets + " §7(комиссия 3%)");
-                p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.5f);
-                Bukkit.broadcastMessage("§6[АУКЦИОН] §f" + p.getName() + " §aкупил за §e$" + (int)item.price);
+                it.remove();
+                p.sendMessage(AuctionMessages.get("item-returned"));
                 p.closeInventory();
                 return;
             }
         }
     }
 
-    private void returnMyItem(Player p, ItemStack clicked) {
-        cleanup();
-        for (AuctionItem item : items) {
-            if (item.getDisplay().isSimilar(clicked) && item.seller.equals(p.getUniqueId())) {
-                p.getInventory().addItem(item.item.clone());
-                items.remove(item);
-                p.sendMessage("§a§l✓ Товар возвращен в инвентарь!");
-                p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                p.closeInventory();
-                return;
-            }
+    public static boolean canSell(Player p) {
+        return getPlayerSlotsUsed(p.getUniqueId()) < getMaxSlots(p);
+    }
+
+    public static void addItem(AuctionItem item) {
+        items.add(item);
+        Bukkit.broadcastMessage(AuctionMessages.get("item-listed",
+                "player", Bukkit.getOfflinePlayer(item.seller).getName(),
+                "price", String.valueOf((int) item.price),
+                "category", item.category));
+    }
+
+    public static int getMaxSlots(Player p) {
+        int max = 5;
+        for (int i = 1; i <= 1000; i++) {
+            if (p.hasPermission("auction.slot.group." + i)) max = i;
         }
+        return max;
+    }
+
+    public static int getPlayerSlotsUsed(UUID uuid) {
+        cleanup();
+        int count = 0;
+        for (AuctionItem item : items) {
+            if (item.seller.equals(uuid)) count++;
+        }
+        return count;
+    }
+
+    public static void cleanup() {
+        items.removeIf(item -> System.currentTimeMillis() > item.expires);
     }
 
     private String getCategory(String title) {
-        if (title.contains("ВСЕ")) return "ВСЕ";
         if (title.contains("ОРУЖИЕ")) return "ОРУЖИЕ";
         if (title.contains("ИНСТРУМЕНТЫ")) return "ИНСТРУМЕНТЫ";
         if (title.contains("РЕСУРСЫ")) return "РЕСУРСЫ";
@@ -237,32 +239,20 @@ public class AuctionInventory implements Listener {
 
     private int getPage(String title) {
         try {
-            String[] parts = title.split("/");
-            if (parts.length > 1) {
-                String pagePart = parts[0].substring(parts[0].lastIndexOf(" ") + 1).trim();
-                return Integer.parseInt(pagePart);
-            }
-        } catch (Exception ignored) {}
-        return 1;
+            String part = title.substring(title.indexOf("(") + 1, title.indexOf(")"));
+            return Integer.parseInt(part.split("/")[0]);
+        } catch (Exception e) {
+            return 1;
+        }
     }
 
-    public static void addItem(AuctionItem item) {
-        items.add(item);
-        Bukkit.broadcastMessage("§6[АУКЦИОН] §f" +
-                Bukkit.getOfflinePlayer(item.seller).getName() +
-                " §7выставил §e$" + (int)item.price + " §7(" + item.category + ")");
-    }
-
-    public static void cleanup() {
-        items.removeIf(item -> System.currentTimeMillis() > item.expires);
-    }
-
-    private ItemStack createItem(Material mat, String name, String... lore) {
+    private ItemStack createItem(Material mat, String name) {
         ItemStack item = new ItemStack(mat);
         ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(name);
-        if (lore.length > 0) meta.setLore(Arrays.asList(lore));
-        item.setItemMeta(meta);
+        if (meta != null) {
+            meta.setDisplayName(name);
+            item.setItemMeta(meta);
+        }
         return item;
     }
 }

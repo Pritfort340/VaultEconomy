@@ -1,5 +1,7 @@
 package me.kodysimpson.vaulteconomy.modules.teleport;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -15,23 +17,34 @@ public class TpahereCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+
+        // ❌ только игрок
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("Только игроки могут использовать эту команду.");
-            return false;
+            sender.sendMessage(ChatColor.RED + "Команда доступна только игрокам.");
+            return true;
         }
 
+        // ❌ аргументы
         if (args.length != 1) {
-            player.sendMessage("Использование: /tpahere <игрок>");
-            return false;
+            player.sendMessage(ChatColor.RED + "Использование: /tpahere <игрок>");
+            return true;
         }
 
-        Player target = player.getServer().getPlayer(args[0]);
+        // 🎯 цель
+        Player target = Bukkit.getPlayerExact(args[0]);
         if (target == null) {
-            player.sendMessage("Игрок не найден.");
-            return false;
+            player.sendMessage(ChatColor.RED + "Игрок не найден.");
+            return true;
         }
 
-        teleportModule.teleportHere(player, target);
+        // ❌ сам себе
+        if (target.equals(player)) {
+            player.sendMessage(ChatColor.RED + "Нельзя телепортировать себя к себе.");
+            return true;
+        }
+
+        // ✅ отправляем запрос
+        teleportModule.sendTpahere(player, target);
         return true;
     }
 }

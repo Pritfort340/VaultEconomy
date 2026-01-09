@@ -1,8 +1,6 @@
 package me.kodysimpson.vaulteconomy.modules.teleport;
 
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import org.bukkit.command.*;
 import org.bukkit.entity.Player;
 
 public class TpaDenyCommand implements CommandExecutor {
@@ -15,12 +13,10 @@ public class TpaDenyCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Только игроки могут использовать эту команду.");
-            return false;
-        }
 
-        teleportModule.denyTpaRequest(player);
+        if (sender instanceof Player player) {
+            teleportModule.deny(player);
+        }
         return true;
     }
 }

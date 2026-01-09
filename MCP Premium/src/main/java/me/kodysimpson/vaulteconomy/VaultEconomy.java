@@ -1,337 +1,257 @@
 package me.kodysimpson.vaulteconomy;
 
-import me.kodysimpson.vaulteconomy.news.command.auction.HelpAh;
-import me.kodysimpson.vaulteconomy.news.command.auction.AuctionMain;
-import me.kodysimpson.vaulteconomy.news.command.filter.ChatFilterCommand;
-import org.bukkit.plugin.java.JavaPlugin;
-import me.kodysimpson.vaulteconomy.news.command.kastom.KastomFurnace;
-import me.kodysimpson.vaulteconomy.news.command.kastom.KastomPotion;
-import me.kodysimpson.vaulteconomy.news.command.kastom.KastomCommand;
-import me.kodysimpson.vaulteconomy.news.command.kastom.PotionCrafting; // ✅ ДОБАВЬТЕ ИМПОРТ
-import me.kodysimpson.vaulteconomy.chat.IgnoreManager;
-import me.kodysimpson.vaulteconomy.chat.PrefixManager;
+import me.kodysimpson.vaulteconomy.chat.*;
+import me.kodysimpson.vaulteconomy.chat.clancommand.*;
+import me.kodysimpson.vaulteconomy.chat.clancommand.ClanCommand;
+import me.kodysimpson.vaulteconomy.chat.clancommand.ClanManager;
+import me.kodysimpson.vaulteconomy.chat.clancommand.commands.*;
+import me.kodysimpson.vaulteconomy.chat.clancommand.commands.ClanUpdater;
 import me.kodysimpson.vaulteconomy.commands.*;
-import me.kodysimpson.vaulteconomy.economy.CustomEconomy;
-import me.kodysimpson.vaulteconomy.economy.PointCommand;
-import me.kodysimpson.vaulteconomy.economy.PointManager;
-import me.kodysimpson.vaulteconomy.listeners.ChatListener;
-import me.kodysimpson.vaulteconomy.modules.fly.FlyCommand;
-import me.kodysimpson.vaulteconomy.modules.fly.FlyModule;
-import me.kodysimpson.vaulteconomy.modules.gamemode.GamemodeCommand;
-import me.kodysimpson.vaulteconomy.modules.gamemode.GamemodeModule;
-import me.kodysimpson.vaulteconomy.modules.god.GodCommand;
-import me.kodysimpson.vaulteconomy.modules.god.GodModule;
-import me.kodysimpson.vaulteconomy.modules.heal.HealCommand;
-import me.kodysimpson.vaulteconomy.modules.heal.HealModule;
-import me.kodysimpson.vaulteconomy.modules.teleport.TeleportModule;
-import me.kodysimpson.vaulteconomy.modules.teleport.WarpManager;
+import me.kodysimpson.vaulteconomy.economy.*;
+import me.kodysimpson.vaulteconomy.listeners.*;
+import me.kodysimpson.vaulteconomy.modules.fly.*;
+import me.kodysimpson.vaulteconomy.modules.gamemode.*;
+import me.kodysimpson.vaulteconomy.modules.god.*;
+import me.kodysimpson.vaulteconomy.modules.heal.*;
+import me.kodysimpson.vaulteconomy.modules.teleport.*;
+import me.kodysimpson.vaulteconomy.news.command.*;
+import me.kodysimpson.vaulteconomy.news.command.auction.*;
+import me.kodysimpson.vaulteconomy.news.command.back.*;
+import me.kodysimpson.vaulteconomy.news.command.filter.ChatFilterCommand;
+import me.kodysimpson.vaulteconomy.news.command.kastom.*;
+import me.kodysimpson.vaulteconomy.pvp.*;
 import net.milkbowl.vault.economy.Economy;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.ServicePriority;
+import org.bukkit.plugin.java.JavaPlugin;
+import java.io.File;
 
-public class VaultEconomy extends JavaPlugin {
+public final class VaultEconomy extends JavaPlugin {
 
-    private static VaultEconomy instance;  // Синглтон для плагина
+    private static VaultEconomy instance;
+
+    public static VaultEconomy getInstance() {
+        return instance;
+    }
+
+
+    private FileConfiguration pvpConfig;
 
     private CustomEconomy economy;
     private PointManager pointManager;
+    private WarpManager warpManager;
+    private PvpManager pvpManager;
+    private ClanManager clanManager;
+
     private PrefixManager prefixManager;
     private IgnoreManager ignoreManager;
-    private WarpManager warpManager;
-    private KastomFurnace kastomFurnace;
-    private KastomPotion kastomPotion;
-    private AuctionMain auctionMain;
+    private MarriageManager marriageManager;
 
-
-    private HealModule healModule;
-    private TeleportModule teleportModule;
-    private GodModule godModule;
     private FlyModule flyModule;
+    private HealModule healModule;
+    private GodModule godModule;
     private GamemodeModule gamemodeModule;
+    private TeleportModule teleportModule;
+
+    private KastomFurnace kastomFurnace;
+    private AuctionMain auctionMain;
+    private ClanChat clanChat;
 
 
 
     @Override
     public void onEnable() {
 
-        // Загружаем конфиг по умолчанию, если его нет
-        saveDefaultConfig();
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            getLogger().severe("Vault не найден! Плагин отключён.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
 
-        // Сохраняем текущий экземпляр плагина для синглтона
         instance = this;
+        saveDefaultConfig();
+        loadPvpConfig();
 
-        // В onEnable() добавьте:
-        getServer().getPluginManager().registerEvents(new PotionCrafting(), this);
+        pvpManager = new PvpManager(this);
+        clanManager = new ClanManager(pvpManager);
 
-        // Инициализируем экономику
+        /* ===== CLAN CHAT ===== */
+        clanChat = new ClanChat(clanManager);
+        registerListener(clanChat);
+
+        registerListener(new PvpListener(pvpManager));
+        registerListener(new PvpQuitListener(pvpManager));
+        registerListener(new PvpCommandBlocker(this, pvpManager));
+
+        prefixManager = new PrefixManager(this);
+        ignoreManager = new IgnoreManager(this);
+        marriageManager = new MarriageManager(this);
+
         economy = new CustomEconomy(this);
         economy.loadBalances();
 
-        // Регистрируем экономику в системе Vault
+        registerListener(new EconomyQuitListener(economy));
+
         getServer().getServicesManager().register(
                 Economy.class,
                 economy,
                 this,
                 ServicePriority.Highest
         );
+        getLogger().info("Vault Economy успешно зарегистрирована");
 
-        // Инициализируем менеджер поинтов (мультивалюта) и загружаем данные
+
+        AuctionMessages.init(this);
+
         pointManager = new PointManager(this);
         pointManager.load();
 
-        // Ignore manager
-        ignoreManager = new IgnoreManager();
+        warpManager = new WarpManager(this);
 
-        // Инициализируем систему префиксов и чат
-        prefixManager = new PrefixManager(this);
+        flyModule = new FlyModule(this);
+        registerListener(flyModule);
+        command("fly", new FlyCommand(this, flyModule));
+
+        healModule = new HealModule(getConfig(), pvpManager);
+        command("heal", new HealCommand(getConfig(), pvpManager));
+
+        godModule = new GodModule(pvpManager);
+        command("god", new GodCommand(godModule));
+
+        gamemodeModule = new GamemodeModule();
+        command("gamemode", new GamemodeCommand(gamemodeModule));
+
+        teleportModule = new TeleportModule(this, pvpManager);
+        registerListener(teleportModule);
+        command("tp", new TeleportCommand(teleportModule));
+        command("tpa", new TpaCommand(teleportModule));
+        command("tpaaccept", new TpaAcceptCommand(teleportModule));
+        command("tpadeny", new TpaDenyCommand(teleportModule));
+        command("tpahere", new TpahereCommand(teleportModule));
+
+        command("prefix", new PrefixCommand(prefixManager));
+        command("clan", new ClanCommand(clanManager, clanChat));
+
+
+        registerListener(new PotionCrafting(this));
+        registerListener(new ChatListener(prefixManager, ignoreManager, marriageManager, clanManager));
+
+        kastomFurnace = new KastomFurnace(getConfig());
+        registerListener(kastomFurnace);
+        command("kostoms", new KastomFurnaceCommand(kastomFurnace));
+        command("kastom", new KastomCommand());
+
+        auctionMain = new AuctionMain(this);
+        if (getCommand("ve") != null) getCommand("ve").setExecutor(new VaultEconomyCommand(this));
+        command("ah", auctionMain);
+        command("ahelp", new HelpAh(this));
+
         getServer().getPluginManager().registerEvents(
-                new ChatListener(prefixManager, ignoreManager),
+                new ClanStorageListener(),
                 this
         );
 
-        // Инициализируем Warp систему
-        warpManager = new WarpManager(this);
+        registerListener(new BackListener());
+        command("back", new BackCommand(this));
 
-        // Регистрируем команды экономики
-        if (getCommand("bits") != null) {
-            getCommand("bits").setExecutor(new BalanceCommand(this));  // /bits
-        }
-        if (getCommand("point") != null) {
-            getCommand("point").setExecutor(new PointCommand(this, pointManager)); // /point ...
-        }
-        if (getCommand("baltop") != null) {
-            getCommand("baltop").setExecutor(new BaltopCommand(this));
-        }
+        command("bits", new BalanceCommand(this));
+        command("baltop", new BaltopCommand(this));
+        command("point", new PointCommand(this, pointManager));
 
-        // Команда управления префиксами /pex
-        if (getCommand("pex") != null) {
-            getCommand("pex").setExecutor(new PexCommand(this, prefixManager));
-        }
+        command("spawn", new SpawnCommand(warpManager, pvpManager));
+        command("setspawn", new SetSpawnCommand(warpManager));
+        command("home", new HomeCommand(warpManager));
+        command("sethome", new SetHomeCommand(warpManager, this));
+        command("delhome", new DelHomeCommand(warpManager));
+        command("homelist", new HomelistCommand(warpManager));
+        command("warp", new WarpCommand(warpManager));
+        command("setwarp", new SetWarpCommand(warpManager));
+        command("delwarp", new DelWarpCommand(warpManager));
+        command("warplist", new WarplistCommand(warpManager));
 
+        command("craft", new CraftCommand(this));
+        command("anvil", new AnvilCommand());
+        command("ec", new EnderChestCommand());
+        command("repair", new RepairCommand(this));
+        command("filter", new ChatFilterCommand(this));
+        command("clearchat", new ClearChatCommand());
+        command("feed", new FeedCommand());
+        command("ignore", new IgnoreCommand(ignoreManager));
+        command("sp", new SpawnMobCommand());
 
+        command("marry", new MarryCommand(this, marriageManager));
 
-        // ===== WARP / HOME / LIST КОМАНДЫ =====
-        if (getCommand("spawn") != null) {
-            getCommand("spawn").setExecutor(new SpawnCommand(warpManager));
-        }
-        if (getCommand("home") != null) {
-            getCommand("home").setExecutor(new HomeCommand(warpManager));
-        }
-        if (getCommand("sethome") != null) {
-            getCommand("sethome").setExecutor(new SetHomeCommand(warpManager, this));
-        }
-        if (getCommand("delhome") != null) {
-            getCommand("delhome").setExecutor(new DelHomeCommand(warpManager));
-        }
-        if (getCommand("warp") != null) {
-            getCommand("warp").setExecutor(new WarpCommand(warpManager));
-        }
-        if (getCommand("setwarp") != null) {
-            getCommand("setwarp").setExecutor(new SetWarpCommand(warpManager));
-        }
-        if (getCommand("delwarp") != null) {
-            getCommand("delwarp").setExecutor(new DelWarpCommand(warpManager));
-        }
-        if (getCommand("warplist") != null) {
-            getCommand("warplist").setExecutor(new WarplistCommand(warpManager));
-        }
-        if (getCommand("homelist") != null) {
-            getCommand("homelist").setExecutor(new HomelistCommand(warpManager));
-        }
-
-        // Регистрируем команды модулей
-
-        // Fly ✅ ИСПРАВЛЕНО
-        flyModule = new FlyModule(getConfig());
-        getServer().getPluginManager().registerEvents(flyModule, this);
-        if (getCommand("fly") != null) {
-            getCommand("fly").setExecutor(new FlyCommand(getConfig(), flyModule));  // Передаём flyModule
-        }
-
-        // Heal
-        healModule = new HealModule(getConfig());
-        if (getCommand("heal") != null) {
-            getCommand("heal").setExecutor(new HealCommand(getConfig()));  // /heal
-        }
-        // УБРАНО: healModule не implements Listener
-
-        // Gamemode
-        gamemodeModule = new GamemodeModule();
-        if (getCommand("gamemode") != null) {
-            getCommand("gamemode").setExecutor(new GamemodeCommand(gamemodeModule));  // /gamemode
-        }
-        // УБРАНО: gamemodeModule не implements Listener
-
-        // God
-        godModule = new GodModule();
-        if (getCommand("god") != null) {
-            getCommand("god").setExecutor(new GodCommand(godModule));  // /god
-        }
-        // УБРАНО: godModule не implements Listener
-
-        // Teleport
-        teleportModule = new TeleportModule();
-        getServer().getPluginManager().registerEvents(teleportModule, this);
-
-        if (getCommand("tp") != null) {
-            getCommand("tp").setExecutor(new me.kodysimpson.vaulteconomy.modules.teleport.TeleportCommand(teleportModule));
-        }
-        if (getCommand("tpa") != null) {
-            getCommand("tpa").setExecutor(new me.kodysimpson.vaulteconomy.modules.teleport.TpaCommand(teleportModule));
-        }
-        if (getCommand("tpaaccept") != null) {
-            getCommand("tpaaccept").setExecutor(new me.kodysimpson.vaulteconomy.modules.teleport.TpaAcceptCommand(teleportModule));
-        }
-        if (getCommand("tpadeny") != null) {
-            getCommand("tpadeny").setExecutor(new me.kodysimpson.vaulteconomy.modules.teleport.TpaDenyCommand(teleportModule));
-        }
-        if (getCommand("tpahere") != null) {
-            getCommand("tpahere").setExecutor(new me.kodysimpson.vaulteconomy.modules.teleport.TpahereCommand(teleportModule));
-        }
-
-        // Дополнительные команды
-        if (getCommand("clearchat") != null) {
-            getCommand("clearchat").setExecutor(new ClearChatCommand());
-        }
-        if (getCommand("feed") != null) {
-            getCommand("feed").setExecutor(new FeedCommand());
-        }
-        if (getCommand("ignore") != null) {
-            getCommand("ignore").setExecutor(new IgnoreCommand(ignoreManager));
-        }
-        if (getCommand("sp") != null) {
-            getCommand("sp").setExecutor(new SpawnMobCommand());
-        }
-
-        // Визуальные эффекты (пример, пока не используется)
-        if (getCommand("visualeffects") != null) {
-            // VisualEffects.showTeleportEffect(getServer().getPlayer("playerName"));
-        }
-
-        // ===== УТИЛИТЫ =====
-        if (getCommand("craft") != null) {
-            getCommand("craft").setExecutor(new me.kodysimpson.vaulteconomy.news.command.CraftCommand(this));
-        }
-
-        if (getCommand("anvil") != null) {
-            getCommand("anvil").setExecutor(new me.kodysimpson.vaulteconomy.news.command.AnvilCommand());
-        }
-        if (getCommand("ec") != null) {
-            getCommand("ec").setExecutor(new me.kodysimpson.vaulteconomy.news.command.EnderChestCommand());
-        }
-        if (getCommand("sejf") != null) {
-            getCommand("sejf").setExecutor(new me.kodysimpson.vaulteconomy.news.command.SejfCommand());
-        }
-        if (getCommand("repair") != null) {
-            getCommand("repair").setExecutor(new me.kodysimpson.vaulteconomy.news.command.RepairCommand(this));
-        }
-
-        // ✅ ФИЛЬТР ЧАТА - ДОБАВЬ ЭТУ СТРОКУ
-        if (getCommand("filter") != null) {
-            getCommand("filter").setExecutor(new ChatFilterCommand(this));
-        }
-
-        // ✅ КАСТОМНЫЕ ПРЕДМЕТЫ - ТОЛЬКО ЗЕЛЬЯ
-        this.kastomFurnace = new KastomFurnace(getConfig());
-        this.kastomPotion = new KastomPotion();
-        getServer().getPluginManager().registerEvents(this.kastomFurnace, this);
-        getServer().getPluginManager().registerEvents(this.kastomPotion, this);
-
-        // ✅ АУКЦИОН - ОДИН РАЗ
-        this.auctionMain = new AuctionMain(this);
-        if (getCommand("ah") != null) {
-            getCommand("ah").setExecutor(this.auctionMain);
-        }
-
-        // ✅ НЕЗАВИСИМЫЙ HELP - БЕЗОПАСНО
-        HelpAh helpAh = new HelpAh(this);
-        if (getCommand("ahelp") != null) {
-            getCommand("ahelp").setExecutor(helpAh);
-        }
-
-        if (getCommand("kastom") != null) {
-            getCommand("kastom").setExecutor(new KastomCommand());  // ✅ 0 аргументов
-        }
-
-        // Выводим сообщение в консоль о символе валюты
-        String symbol = getConfig().getString("currency.symbol", "⛁");
-        getLogger().info("VaultEconomy включён. Символ основной валюты: " + symbol);
+        new ClanUpdater(clanManager).runTaskTimer(this, 20L * 60, 20L * 60);
     }
 
     @Override
     public void onDisable() {
-
-        // Сохраняем балансы основной экономики
-        if (economy != null) {
-            economy.saveBalances();
-        }
-
-        // Сохраняем данные по мультивалюте
-        if (pointManager != null) {
-            pointManager.save();
-        }
-
-        getLogger().info("VaultEconomy выключен.");
+        if (economy != null) economy.saveBalances();
+        if (pointManager != null) pointManager.save();
     }
 
-    // Метод для перезагрузки конфигурации плагина
-    public void reloadPluginConfig() {
-        reloadConfig();
-        getLogger().info("Конфигурация плагина перезагружена.");
+    /* ===================== HELPERS ===================== */
+
+    private void registerListener(org.bukkit.event.Listener listener) {
+        getServer().getPluginManager().registerEvents(listener, this);
     }
 
-    // Геттеры для доступа к экономике и модулям
-    public CustomEconomy getEconomy() {
-        return economy;
+    private void command(String name, org.bukkit.command.CommandExecutor executor) {
+        if (getCommand(name) != null) {
+            getCommand(name).setExecutor(executor);
+        }
+    }
+
+    private void loadPvpConfig() {
+        saveResource("pvp.yml", false);
+        File file = new File(getDataFolder(), "pvp.yml");
+        pvpConfig = YamlConfiguration.loadConfiguration(file);
+    }
+
+    /* ===================== GETTERS ===================== */
+
+
+    public FileConfiguration getPvpConfig() {
+        return pvpConfig;
+    }
+
+    public PvpManager getPvpManager() {
+        return pvpManager;
     }
 
     public PointManager getPointManager() {
         return pointManager;
     }
 
-    public PrefixManager getPrefixManager() {
-        return prefixManager;
+    public CustomEconomy getEconomy() {
+        return economy;
     }
 
-    public IgnoreManager getIgnoreManager() {
-        return ignoreManager;
+    public ClanManager getClanManager() {
+        return clanManager;
     }
 
+    /* ===================== RELOAD ===================== */
 
-    public WarpManager getWarpManager() {
-        return warpManager;
+    public void reloadPluginConfig() {
+        reloadConfig();
+        getLogger().info("VaultEconomy: config.yml перезагружен");
     }
 
-    public HealModule getHealModule() {
-        return healModule;
-    }
+    public void reloadAll() {
+        reloadConfig();
+        loadPvpConfig();
 
-    public TeleportModule getTeleportModule() {
-        return teleportModule;
-    }
+        if (prefixManager != null) prefixManager.reload();
+        if (economy != null) economy.reload();
 
-    public GodModule getGodModule() {
-        return godModule;
-    }
+        if (pointManager != null) {
+            pointManager.save();
+            pointManager.load();
+        }
 
-    public FlyModule getFlyModule() {
-        return flyModule;
-    }
-
-    public GamemodeModule getGamemodeModule() {
-        return gamemodeModule;
-    }
-
-    public KastomFurnace getKastomFurnace() {
-        return kastomFurnace;
-    }
-
-    public KastomPotion getKastomPotion() {
-        return kastomPotion;
-    }
-
-    public AuctionMain getAuctionMain() { return auctionMain; }
-    // Синглтон: возвращаем единственный экземпляр плагина
-    public static VaultEconomy getInstance() {
-        return instance;
+        AuctionMessages.reload(this);
+        getLogger().info("VaultEconomy: полный reload выполнен");
     }
 }

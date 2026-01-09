@@ -15,17 +15,13 @@ public class GodCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("Только игроки могут использовать эту команду.");
-            return false;
-        }
 
-        Player player = (Player) sender;
-        if (args.length == 0) {
-            godModule.toggleGodMode(player);  // Переключаем режим Бога
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Только игроки могут использовать эту команду.");
             return true;
         }
 
-        return false;  // Можно добавить дополнительные проверки для администраторов или другие аргументы
+        godModule.toggleGodMode(player);
+        return true;
     }
 }
