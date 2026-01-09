@@ -1,5 +1,0 @@
-item-listed: "&aИгрок &e%player% &aвыставил предмет за &e%price% &a(&7%category%&a)"
-purchase-success: "&aВы купили предмет за &e%price%"
-no-money: "&cНедостаточно средств"
-item-returned: "&eПредмет возвращён вам"
-pvp-block: "&cНельзя использовать аукцион в PvP"
