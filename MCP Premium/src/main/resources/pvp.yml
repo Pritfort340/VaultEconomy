@@ -1,0 +1,17 @@
+pvp:
+  duration-seconds: 30
+
+  blocked-commands:
+    - spawn
+    - home
+    - tp
+    - tpa
+    - warp
+
+  messages:
+    start: "&c⚔ Вы вошли в PvP!"
+    end: "&a✔ PvP окончено"
+    command-blocked: "&c❌ Команды запрещены в PvP!"
+
+  bossbar:
+    text: "&cPvP: {time} сек"
